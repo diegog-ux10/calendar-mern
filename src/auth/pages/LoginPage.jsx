@@ -17,7 +17,7 @@ const registerFormFields = {
 };
 
 export const LoginPage = () => {
-  const { startLogin, errorMessage } = useAuthStore();
+  const { startLogin, errorMessage, startRegister } = useAuthStore();
   // Login Form State
   const {
     loginEmail,
@@ -36,21 +36,27 @@ export const LoginPage = () => {
   const loginSubmit = (event) => {
     event.preventDefault();
     startLogin({ email: loginEmail, password: loginPassword });
+    Swal.fire("Bienvenido", loginEmail, "success");
   };
 
   const registerSubmit = (event) => {
     event.preventDefault();
-    console.log({
-      registerName,
-      registerEmail,
-      registerPassword,
-      registerPassword2,
+    if (registerPassword !== registerPassword2) {
+      Swal.fire("Error", "Las Contraseñas deben ser Iguales", "error");
+    }
+    startRegister({
+      name: registerName,
+      email: registerEmail,
+      password: registerPassword,
     });
+
+    Swal.fire("Done", "User Register Success", "success");
   };
 
   useEffect(() => {
     if (errorMessage !== undefined) {
       Swal.fire("Error Authenticated", errorMessage, "error");
+      return;
     }
   }, [errorMessage]);
 

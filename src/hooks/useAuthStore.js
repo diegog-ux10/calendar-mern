@@ -6,7 +6,6 @@ import {
   onLogin,
   onLogout,
 } from "../store/auth/authSlice";
-import axios from "axios";
 
 export const useAuthStore = () => {
   const { status, user, errorMessage } = useSelector((state) => state.auth);
@@ -15,7 +14,7 @@ export const useAuthStore = () => {
   const startLogin = async ({ email, password }) => {
     dispatch(onChecking());
     try {
-      const { data } = await axios.post("http://localhost:4000/api/auth/", {
+      const { data } = await calendarApi.post("/auth", {
         email,
         password,
       });
@@ -30,12 +29,55 @@ export const useAuthStore = () => {
     }
   };
 
+  const startRegister = async ({ name, email, password }) => {
+    dispatch(onChecking());
+    try {
+      const { data } = await calendarApi.post("/auth/new", {
+        name,
+        email,
+        password,
+      });
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("token-init-date", new Date().getTime());
+
+      dispatch(onLogin({ name: data.name, uid: data.uid }));
+    } catch (error) {
+      dispatch(onLogout(error.response.data?.msg || ""));
+      setTimeout(() => {
+        dispatch(clearErrorMessage());
+      }, 10);
+    }
+  };
+
+  const checkAuthToken = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return dispatch(onLogout());
+    try {
+      const { data } = await calendarApi.get("auth/renew");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("token-init-date", new Date().getTime());
+      dispatch(onLogin({ name: data.name, uid: data.uid }));
+    } catch (error) {
+      localStorage.clear();
+      dispatch(onLogout());
+    }
+  };
+
+  const startLogout = () => {
+    localStorage.clear();
+    dispatch(onLogout());
+  };
+
   return {
     //*Propertys
     errorMessage,
     status,
     user,
     //*Methods
+    checkAuthToken,
     startLogin,
+    startLogout,
+    startRegister,
   };
 };
