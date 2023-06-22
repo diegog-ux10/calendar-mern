@@ -7,6 +7,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import { useUiStore } from "../../hooks/useUiStore";
+import { useEffect } from "react";
+import { useCalendarStore } from "../../hooks/useCalendarStore";
 
 registerLocale("es", es);
 
@@ -25,6 +27,7 @@ Modal.setAppElement("#root");
 
 export const CalendarModal = () => {
   const { isDateModalOpen, closeModal } = useUiStore();
+  const { activeEvent, startSavingEvent } = useCalendarStore();
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formValues, setFormValues] = useState({
     title: "",
@@ -37,6 +40,12 @@ export const CalendarModal = () => {
     if (!formSubmitted) return "";
     return formValues.title.length > 0 ? "is-valid" : "is-invalid ";
   }, [formValues.title, formSubmitted]);
+
+  useEffect(() => {
+    if (activeEvent !== null) {
+      setFormValues({ ...activeEvent });
+    }
+  }, [activeEvent]);
 
   const onDateChanged = (event, changing) => {
     setFormValues({
@@ -52,7 +61,7 @@ export const CalendarModal = () => {
     });
   };
 
-  const onSubmit = (event) => {
+  const onSubmit = async (event) => {
     event.preventDefault();
     setFormSubmitted(true);
     const difference = differenceInSeconds(formValues.end, formValues.start);
@@ -60,6 +69,9 @@ export const CalendarModal = () => {
       Swal.fire("Fechas Incorrectas", "Revisar Fechas", "error");
     }
     if (formValues.title.length <= 0) return;
+    await startSavingEvent(formValues);
+    closeModal();
+    setFormSubmitted(false);
   };
 
   return (
